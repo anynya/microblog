@@ -1,0 +1,26 @@
+{
+  "canisters": {
+    "microblog": {
+      "main": "src/microblog_backend/main.mo",
+      "type": "motoko"
+    },
+    "microblog2": {
+      "main": "src/microblog_backend/main.mo",
+      "type": "motoko"
+    }
+  },
+  "defaults": {
+    "build": {
+      "args": "",
+      "packtool": ""
+    }
+  },
+  "dfx": "0.11.1",
+  "networks": {
+    "local": {
+      "bind": "127.0.0.1:8077",
+      "type": "ephemeral"
+    }
+  },
+  "version": 1
+}
