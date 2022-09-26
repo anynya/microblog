@@ -4,38 +4,58 @@ import Time "mo:base/Time";
 import Principal "mo:base/Principal";
 
 actor {
-  public type Message = {
-    author: Principal;
+  public type Microblog = actor {
+    follow: shared(Text, Principal) -> async ();
+    follows: shared query () -> async [Account];
+    post: shared (Text, Text) -> async ();
+    posts: shared query (Time.Time) -> async [Message];
+    get_posts_by_principal: shared (Principal) -> async [Message];
+    get_name_by_principal: shared (Principal) -> async ?Text;
+    timeline: shared (Time.Time) -> async [Message];
+    set_name: shared (Text, Text) -> async ();
+    get_name: shared query () -> async ?Text;
+    clean_all: shared (Text) -> async ();
+  };
+
+  public shared func clean_all(otp: Text): async () {
+    assert(otp == "123456");
+    followed := List.nil();
+    messages := List.nil();
+    author_name := "";
+  };
+
+  public type Account = {
+    name: ?Text;
+    principal: Principal;
+  };
+
+  stable var followed: List.List<Account> = List.nil();
+
+  public shared func follow(otp: Text, id: Principal): async () {
+    assert(otp == "123456");
+    let name = await get_name_by_principal(id);
+    followed := List.push({
+      name=name;
+      principal=id;
+    }, followed);
+  };
+
+  public shared query func follows(): async [Account] {
+    List.toArray(followed);
+  };
+
+   public type Message = {
+    author: Text;
     text: Text;
     time: Time.Time;
   };
 
-  public type Microblog = actor {
-    follow: shared(Principal) -> async ();
-    follows: shared query () -> async [Principal];
-    post: shared (Text) -> async ();
-    posts: shared query (Time.Time) -> async [Message];
-    timeline: shared (Time.Time) -> async [Message];
-    set_name: shared (Text) -> async ();
-    get_name: shared query () -> async ?Text;
-  };
-
-  stable var followed: List.List<Principal> = List.nil();
-
-  public shared func follow(id: Principal): async () {
-    followed := List.push(id, followed);
-  };
-
-  public shared query func follows(): async [Principal] {
-    List.toArray(followed);
-  };
-
   stable var messages: List.List<Message> = List.nil();
 
-  public shared (rec) func post(text: Text): async () {
-    assert(Principal.toText(rec.caller) == "ozasf-so6uh-apjxq-umq5a-soikw-gepv3-vwwjg-4fir4-bzk5h-dn3mq-6ae");
+  public shared (rec) func post(otp: Text, text: Text): async () {
+    assert(otp == "123456");
     messages := List.push({
-      author=rec.caller;
+      author=author_name;
       text=text;
       time=Time.now();
       }, messages);
@@ -45,11 +65,22 @@ actor {
    List.toArray(List.filter(messages, func (msg: Message): Bool { msg.time >= since }))
   };
 
+  public shared func get_name_by_principal(id: Principal): async ?Text {
+    let canister: Microblog = actor(Principal.toText(id));
+    await canister.get_name()
+  };
+
+  public shared func get_posts_by_principal(id: Principal): async [Message] {
+      var all: List.List<Message> = List.nil();
+      let canister: Microblog = actor(Principal.toText(id));
+      await canister.posts(0)
+  };
+
   public shared func timeline(since: Time.Time): async [Message] {
     var all: List.List<Message> = List.nil();
 
-    for (id in Iter.fromList(followed)) {
-      let canister: Microblog = actor(Principal.toText(id));
+    for (act in Iter.fromList(followed)) {
+      let canister: Microblog = actor(Principal.toText(act.principal));
       let msgs = await canister.posts(since);
 
       for (msg in Iter.fromArray(msgs)) {
@@ -62,8 +93,8 @@ actor {
 
   stable var author_name: Text = "";
 
-  public shared (rec) func set_name(name: Text): async () {
-    assert(Principal.toText(rec.caller) == "ozasf-so6uh-apjxq-umq5a-soikw-gepv3-vwwjg-4fir4-bzk5h-dn3mq-6ae");
+  public shared (rec) func set_name(otp: Text, name: Text): async () {
+    assert(otp == "123456");
     author_name := name;
   };
 

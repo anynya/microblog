@@ -1,0 +1,26 @@
+body {
+    margin-top: 80px;
+    color: #487897;
+    background: lightblue;
+    font-size: 24px;
+}
+
+.content {
+    margin: 30px;
+}
+
+#filled-multiline-static{
+    width: 400px;
+}
+
+.inline {
+    display: flex;
+    min-width: 200px;
+}
+
+.link-button {
+    font-size: 18px;
+    text-decoration: none;
+    color: white;
+    margin: 0 10px;
+}
